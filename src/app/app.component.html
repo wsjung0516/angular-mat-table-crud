@@ -2,6 +2,9 @@
   <span>Angular 8 MatTable CRUD Example</span>
   <span class="spacer"></span>
   Reload data:
+  <button mat-icon-button (click)="clickToggle$.next()">Toggle
+    <mat-icon>toggle</mat-icon>
+  </button>
   <button mat-icon-button (click)="refresh()">
     <mat-icon>refresh</mat-icon>
   </button>
@@ -71,7 +74,7 @@
     </ng-container>
 
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;" [@state]="row.status"></mat-row>
   </mat-table>
 
 

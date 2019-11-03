@@ -9,13 +9,25 @@ import {DataSource} from '@angular/cdk/collections';
 import {AddDialogComponent} from './dialogs/add/add.dialog.component';
 import {EditDialogComponent} from './dialogs/edit/edit.dialog.component';
 import {DeleteDialogComponent} from './dialogs/delete/delete.dialog.component';
-import {BehaviorSubject, fromEvent, merge, Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
+import {BehaviorSubject, timer, fromEvent, merge, Observable, Subject} from 'rxjs';
+import {map, takeUntil} from 'rxjs/operators';
+
+// import {triggerAsyncId} from 'async_hooks';
+import {animate, keyframes, style, transition, trigger} from '@angular/animations';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
+  animations: [
+    trigger( 'state', [
+      transition('void => Processing',
+        animate( '525ms cubic-bezier(0.4, 0.0, 0.2, 1)', keyframes([
+          style({minHeight: '0px', overflow: 'hidden', height: '0px'}),
+          style( {minHeight: '*', overflow: 'inherit', height: '*'})
+        ])))
+    ])
+  ]
 })
 
 export class AppComponent implements OnInit {
@@ -24,6 +36,7 @@ export class AppComponent implements OnInit {
   dataSource: ExampleDataSource | null;
   index: number;
   id: number;
+  clickToggle$: Subject<any> = new Subject<any>();
 
   constructor(public httpClient: HttpClient,
               public dialog: MatDialog,
@@ -35,6 +48,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.loadData();
+
   }
 
   refresh() {
@@ -124,6 +138,7 @@ export class AppComponent implements OnInit {
   public loadData() {
     this.exampleDatabase = new DataService(this.httpClient);
     this.dataSource = new ExampleDataSource(this.exampleDatabase, this.paginator, this.sort);
+/*
     fromEvent(this.filter.nativeElement, 'keyup')
       // .debounceTime(150)
       // .distinctUntilChanged()
@@ -133,6 +148,20 @@ export class AppComponent implements OnInit {
         }
         this.dataSource.filter = this.filter.nativeElement.value;
       });
+*/
+    let tQuery = 'aaaa';
+    let source = timer(0,2000);
+    source.pipe(
+      map( (val) => tQuery + val),
+      takeUntil(this.clickToggle$)
+    ).subscribe((val) => {
+      console.log('read Data-->', val,this.filter.nativeElement.value);
+      if (!this.dataSource) {
+        return;
+      }
+      this.dataSource.filter = this.filter.nativeElement.value;
+      // this.dataSource.filter = val;
+    });
   }
 }
 
