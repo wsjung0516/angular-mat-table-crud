@@ -198,7 +198,7 @@ export class ExampleDataSource extends DataSource<Issue> {
     ];
 
     this._exampleDatabase.getAllIssues();
-
+    console.log('this._exampleDatabase-->', this._exampleDatabase)
 
     return merge(...displayDataChanges).pipe(map( () => {
         // Filter data
