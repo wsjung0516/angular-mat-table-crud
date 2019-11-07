@@ -2,7 +2,7 @@ import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {DataService} from './services/data.service';
 import {HttpClient} from '@angular/common/http';
 import { MatDialog } from '@angular/material/dialog';
-import { MatPaginator } from '@angular/material/paginator';
+import {MatPaginator, PageEvent} from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import {Issue} from './models/issue';
 import {DataSource} from '@angular/cdk/collections';
@@ -10,7 +10,7 @@ import {AddDialogComponent} from './dialogs/add/add.dialog.component';
 import {EditDialogComponent} from './dialogs/edit/edit.dialog.component';
 import {DeleteDialogComponent} from './dialogs/delete/delete.dialog.component';
 import {BehaviorSubject, timer, fromEvent, merge, Observable, Subject} from 'rxjs';
-import {map, takeUntil} from 'rxjs/operators';
+import {map, takeUntil, tap} from 'rxjs/operators';
 
 // import {triggerAsyncId} from 'async_hooks';
 import {animate, keyframes, style, transition, trigger} from '@angular/animations';
@@ -21,7 +21,7 @@ import {animate, keyframes, style, transition, trigger} from '@angular/animation
   styleUrls: ['./app.component.css'],
   animations: [
     trigger( 'state', [
-      transition('void => Processing',
+      transition('void => *',
         animate( '525ms cubic-bezier(0.4, 0.0, 0.2, 1)', keyframes([
           style({minHeight: '0px', overflow: 'hidden', height: '0px'}),
           style( {minHeight: '*', overflow: 'inherit', height: '*'})
@@ -136,7 +136,7 @@ export class AppComponent implements OnInit {
 
 
   public loadData() {
-    this.exampleDatabase = new DataService(this.httpClient);
+    this.exampleDatabase = new DataService(this.httpClient, 1);
     this.dataSource = new ExampleDataSource(this.exampleDatabase, this.paginator, this.sort);
 /*
     fromEvent(this.filter.nativeElement, 'keyup')
@@ -149,6 +149,7 @@ export class AppComponent implements OnInit {
         this.dataSource.filter = this.filter.nativeElement.value;
       });
 */
+/*
     let tQuery = 'aaaa';
     let source = timer(0,2000);
     source.pipe(
@@ -162,7 +163,23 @@ export class AppComponent implements OnInit {
       this.dataSource.filter = this.filter.nativeElement.value;
       // this.dataSource.filter = val;
     });
+*/
   }
+  pageEvent(pageEvent: PageEvent) {
+    console.log(pageEvent); // Look at the props
+    //Call the web service passing params.
+    let take = pageEvent.pageSize;
+    let skip = pageEvent.pageSize * pageEvent.pageIndex;
+    this.exampleDatabase = new DataService(this.httpClient, pageEvent.pageIndex);
+    this.paginator.pageIndex = pageEvent.pageIndex;
+    this.dataSource = new ExampleDataSource(this.exampleDatabase, this.paginator, this.sort);
+    // this.dataSource = new ExampleDataSource(this.exampleDatabase, this.paginator, this.sort);
+
+    // this.loadData();
+    // this.dataSource.findPeople(skip, take);
+
+  }
+
 }
 
 export class ExampleDataSource extends DataSource<Issue> {
@@ -184,7 +201,7 @@ export class ExampleDataSource extends DataSource<Issue> {
               public _sort: MatSort) {
     super();
     // Reset to the first page when the user changes the filter.
-    this._filterChange.subscribe(() => this._paginator.pageIndex = 0);
+    // this._filterChange.subscribe(() => this._paginator.pageIndex = 0);
   }
 
   /** Connect function called by the table to retrieve one stream containing the data to render. */
@@ -198,9 +215,11 @@ export class ExampleDataSource extends DataSource<Issue> {
     ];
 
     this._exampleDatabase.getAllIssues();
-    console.log('this._exampleDatabase-->', this._exampleDatabase)
+    // console.log('this._exampleDatabase-->', this._exampleDatabase.dataChange.subscribe((value => console.log('value-->', value))))
 
-    return merge(...displayDataChanges).pipe(map( () => {
+    return merge(...displayDataChanges).pipe(
+      tap(val => console.log('tap-->',val)),
+      map( () => {
         // Filter data
         this.filteredData = this._exampleDatabase.data.slice().filter((issue: Issue) => {
           const searchStr = (issue.id + issue.title + issue.url + issue.created_at).toLowerCase();
@@ -213,7 +232,8 @@ export class ExampleDataSource extends DataSource<Issue> {
         // Grab the page's slice of the filtered sorted data.
         const startIndex = this._paginator.pageIndex * this._paginator.pageSize;
         this.renderedData = sortedData.splice(startIndex, this._paginator.pageSize);
-        return this.renderedData;
+        // return this.renderedData;
+        return this.filteredData;
       }
     ));
   }
@@ -246,4 +266,5 @@ export class ExampleDataSource extends DataSource<Issue> {
       return (valueA < valueB ? -1 : 1) * (this._sort.direction === 'asc' ? 1 : -1);
     });
   }
+
 }

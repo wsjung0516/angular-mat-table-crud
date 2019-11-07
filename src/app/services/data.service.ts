@@ -1,22 +1,21 @@
-import {Injectable} from '@angular/core';
+import {Injectable, Optional} from '@angular/core';
 import {BehaviorSubject} from 'rxjs';
 import {Issue} from '../models/issue';
 import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 
 @Injectable()
 export class DataService {
-  private readonly API_URL = 'https://api.github.com/repos/angular/angular/issues';
+  private readonly API_URL = `https://api.github.com/repos/angular/angular/issues?page=${this.pa}`;
 
   dataChange: BehaviorSubject<Issue[]> = new BehaviorSubject<Issue[]>([]);
   // Temporarily stores data from dialogs
   dialogData: any;
 
-  constructor (private httpClient: HttpClient) {}
+  constructor (private httpClient: HttpClient, @Optional() private pa: number) {}
 
   get data(): Issue[] {
     return this.dataChange.value;
   }
-
   getDialogData() {
     return this.dialogData;
   }
